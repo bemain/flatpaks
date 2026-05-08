@@ -23,6 +23,8 @@ modules:
       
       # Copy game files to /app/lib/clonehero
       - cp -r . /app/lib/clonehero/
+      # Remove the default songs; I don't know any of them
+      - rm -r /app/lib/clonehero/clonehero_Data/StreamingAssets/songs
 
       # Fix permissions
       - chmod +x /app/lib/clonehero/clonehero
