@@ -31,15 +31,35 @@ jobs:
           gpg_private_key: ${{ secrets.GPG_PRIVATE_KEY }}
           passphrase: ${{ secrets.GPG_PASSPHRASE }}
 
-      - name: Build and Export to Repo
+      - name: Build and Export All Apps
         run: |
-          # Use the GPG Key ID we imported
-          flatpak-builder --force-clean \
-                          --repo=repo \
-                          --gpg-sign=6E3AD62F511CE60A95692755684C5851F7E7829C \
-                          build-dir net.clonehero.CloneHero.yml
+          # Create the repo directory at the root
+          mkdir -p ${{ github.workspace }}/repo
+
+          # Find all .yml or .yaml files, excluding the workflow folder
+          # Format: folder/manifest.yml
+          for manifest in $(find . -maxdepth 2 -name "*.y*ml" -not -path "./.github/*"); do
+            echo "----------------------------------------------------"
+            echo "Processing $manifest"
+            echo "----------------------------------------------------"
+            
+            # Get the directory and filename
+            APP_DIR=$(dirname "$manifest")
+            APP_FILE=$(basename "$manifest")
+            
+            # Enter the subdirectory so the builder sees the .desktop and script files
+            cd "$APP_DIR"
+            
+            flatpak-builder --force-clean \
+                            --repo=${{ github.workspace }}/repo \
+                            --gpg-sign=6E3AD62F511CE60A95692755684C5851F7E7829C \
+                            build-dir "$APP_FILE"
+            
+            # Go back to root for the next iteration
+            cd ${{ github.workspace }}
+          done
           
-          # Update metadata and sign the summary
+          # After all apps are built, update the main repository summary
           flatpak build-update-repo --gpg-sign=6E3AD62F511CE60A95692755684C5851F7E7829C repo
         env:
           # This helps some GPG versions find the agent in CI
