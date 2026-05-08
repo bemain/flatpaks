@@ -13,20 +13,19 @@ finish-args:
   - --share=network
   - --device=all
   - --socket=pulseaudio
-  - --filesystem=xdg-documents/Clone Hero:create
+  - --persist=.clonehero
 
 modules:
   - name: clonehero
     buildsystem: simple
     build-commands:
-      - mkdir -p /app/bin /app/lib/clonehero /app/share/applications
+      - mkdir -p /app/lib/clonehero
       
       # Copy game files to /app/lib/clonehero
       - cp -r . /app/lib/clonehero/
-      
-      # Rename the binary and fix permissions
+
+      # Fix permissions
       - chmod +x /app/lib/clonehero/clonehero
-      - chmod +x /app/lib/clonehero/*.so
       
       # Install the script and desktop file
       - install -Dpm0755 clonehero.sh /app/bin/clonehero.sh
