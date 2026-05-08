@@ -1,0 +1,52 @@
+name: Build and Publish Flatpak Repo
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Install Flatpak and Builder
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y flatpak flatpak-builder
+          flatpak remote-add --user --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
+
+      - name: Install Runtimes
+        run: |
+          flatpak install --user -y flathub org.freedesktop.Platform//23.08 org.freedesktop.Sdk//23.08
+
+      - name: Import GPG Key
+        uses: crazy-max/ghaction-import-gpg@v6
+        with:
+          gpg_private_key: ${{ secrets.GPG_PRIVATE_KEY }}
+          passphrase: ${{ secrets.GPG_PASSPHRASE }}
+
+      - name: Build and Export to Repo
+        run: |
+          # Use the GPG Key ID we imported
+          flatpak-builder --force-clean \
+                          --repo=repo \
+                          --gpg-sign=6E3AD62F511CE60A95692755684C5851F7E7829C \
+                          build-dir net.clonehero.CloneHero.yml
+          
+          # Update metadata and sign the summary
+          flatpak build-update-repo --gpg-sign=6E3AD62F511CE60A95692755684C5851F7E7829C repo
+        env:
+          # This helps some GPG versions find the agent in CI
+          GPG_TTY: /dev/pts/0
+
+      - name: Deploy to GitHub Pages
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          folder: repo
+          branch: gh-pages
