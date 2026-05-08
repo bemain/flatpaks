@@ -19,31 +19,32 @@ modules:
   - name: clonehero
     buildsystem: simple
     build-commands:
-      # Create the folder structure
-      - mkdir -p /app/bin /app/extra /app/share/applications
+      - mkdir -p /app/bin /app/lib/clonehero /app/share/applications
       
-      # Copy everything from the archive to /app/extra
-      - cp -r . /app/extra/
+      # Copy game files to /app/lib/clonehero
+      - cp -r . /app/lib/clonehero/
       
-      # Overwrite/Install the script and desktop file to their proper locations
+      # Rename the binary and fix permissions
+      - chmod +x /app/lib/clonehero/clonehero
+      - chmod +x /app/lib/clonehero/*.so
+      
+      # Install the script and desktop file
       - install -Dpm0755 clonehero.sh /app/bin/clonehero.sh
       - install -Dpm0644 net.clonehero.CloneHero.desktop /app/share/applications/net.clonehero.CloneHero.desktop
-      
-      # Clean up the redundant copies from /app/extra
-      - rm /app/extra/clonehero.sh /app/extra/net.clonehero.CloneHero.desktop
+
 
     sources:
-      # 1. The game binary and assets
+      # The game binary and assets
       - type: archive
         url: https://github.com/clonehero-game/releases/releases/download/v1.1.0.6085-final/Linux.x86_64-Standalone.tar
         sha256: c72effdd20cd80ac3aee2900ec2b5154ada036b7e3ab1e1c4c379152491204aa
       
-      # 2. The external desktop entry file
+      # The external desktop entry file
       - type: file
         path: net.clonehero.CloneHero.desktop
       
-      # 3. The startup wrapper script
+      # The startup wrapper script
       - type: script
         dest-filename: clonehero.sh
         commands:
-          - exec "/app/extra/Clone Hero" "$@"
+          - exec "/app/lib/clonehero/clonehero" "$@"
