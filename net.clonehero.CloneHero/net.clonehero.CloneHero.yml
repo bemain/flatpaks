@@ -14,6 +14,7 @@ finish-args:
   - --device=all
   - --socket=pulseaudio
   - --persist=.clonehero
+  - --filesystem=xdg-documents/Clone Hero:create
 
 modules:
   - name: clonehero
@@ -48,4 +49,18 @@ modules:
       - type: script
         dest-filename: clonehero.sh
         commands:
-          - exec "/app/lib/clonehero/clonehero" "$@"
+          - |
+            INTERNAL_DATA="$HOME/.clonehero"
+            INTERNAL_SONGS="$INTERNAL_DATA/Songs"
+            EXTERNAL_SONGS="$HOME/Documents/Clone Hero/Songs"
+
+            mkdir -p "$INTERNAL_SONGS"
+
+            # Symlink external songs if the directory exists
+            if [ -d "$EXTERNAL_SONGS" ]; then
+                ln -snf "$EXTERNAL_SONGS" "$INTERNAL_SONGS/My_Documents_Songs"
+            else
+                rm -f "$INTERNAL_SONGS/My_Documents_Songs"
+            fi
+            
+            exec "/app/lib/clonehero/clonehero" "$@"
